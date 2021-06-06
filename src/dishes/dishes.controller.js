@@ -121,7 +121,7 @@ function create(req, res, next) {
 }
 
 function read(req, res, next) {
-  res.status(200).json({ data: res.locals.dish });
+  res.json({ data: res.locals.dish });
 }
 
 function update(req, res, next) {

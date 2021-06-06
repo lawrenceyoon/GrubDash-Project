@@ -5,6 +5,20 @@ const orders = require(path.resolve('src/data/orders-data'));
 const nextId = require('../utils/nextId');
 
 // VALIDATION
+function orderExists(req, res, next) {
+  const { orderId } = req.params;
+  const foundOrder = orders.find((order) => orderId === order.id);
+
+  if (foundOrder) {
+    res.locals.order = foundOrder;
+    return next();
+  }
+  next({
+    status: 404,
+    message: `Order dose not exist: ${orderId}`,
+  });
+}
+
 function bodyHasDeliverToProperty(req, res, next) {
   const { data: { deliverTo } = {} } = req.body;
 
@@ -86,6 +100,10 @@ function create(req, res, next) {
   res.status(201).json({ data: newOrder });
 }
 
+function read(req, res, next) {
+  res.json({ data: res.locals.order });
+}
+
 module.exports = {
   list,
   create: [
@@ -95,4 +113,5 @@ module.exports = {
     qualityCheck,
     create,
   ],
+  read: [orderExists, read],
 };
