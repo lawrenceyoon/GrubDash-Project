@@ -15,8 +15,24 @@ function dishExists(req, res, next) {
   }
   next({
     status: 404,
-    message: `No matching dish is found.`,
+    message: `Dish does not exist: ${dishId}.`,
   });
+}
+
+function idBodyMatchesIdRoute(req, res, next) {
+  const { dishId } = req.params;
+  const { data: { id } = {} } = req.body;
+
+  if (id) {
+    if (dishId === id) {
+      return next();
+    }
+    next({
+      status: 400,
+      message: `Dish id does not match route id. Dish: ${id}, Route: ${dishId}`,
+    });
+  }
+  next();
 }
 
 function priceIntegerGreaterThanZero(req, res, next) {
@@ -108,6 +124,25 @@ function read(req, res, next) {
   res.status(200).json({ data: res.locals.dish });
 }
 
+function update(req, res, next) {
+  const dish = res.locals.dish;
+  const { data: { name, description, price, image_url } = {} } = req.body;
+
+  if (dish.name !== name) {
+    dish.name = name;
+  }
+  if (dish.description !== description) {
+    dish.description = description;
+  }
+  if (dish.price !== price) {
+    dish.price = price;
+  }
+  if (dish.image_url !== image_url) {
+    dish.image_url = image_url;
+  }
+  res.json({ data: dish });
+}
+
 // TODO: Implement the /dishes handlers needed to make the tests pass
 module.exports = {
   list,
@@ -120,4 +155,14 @@ module.exports = {
     create,
   ],
   read: [dishExists, read],
+  update: [
+    dishExists,
+    idBodyMatchesIdRoute,
+    bodyHasNameProperty,
+    bodyHasDescriptionProperty,
+    bodyHasPriceProperty,
+    priceIntegerGreaterThanZero,
+    bodyHasImageUrlProperty,
+    update,
+  ],
 };
