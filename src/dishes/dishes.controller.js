@@ -5,6 +5,20 @@ const dishes = require(path.resolve('src/data/dishes-data'));
 const nextId = require('../utils/nextId');
 
 // VALIDATION
+function dishExists(req, res, next) {
+  const { dishId } = req.params;
+  const foundDish = dishes.find((dish) => dishId === dish.id);
+
+  if (foundDish) {
+    res.locals.dish = foundDish;
+    return next();
+  }
+  next({
+    status: 404,
+    message: `No matching dish is found.`,
+  });
+}
+
 function priceIntegerGreaterThanZero(req, res, next) {
   const price = req.body.data.price;
 
@@ -90,6 +104,10 @@ function create(req, res, next) {
   res.status(201).json({ data: newDish });
 }
 
+function read(req, res, next) {
+  res.status(200).json({ data: res.locals.dish });
+}
+
 // TODO: Implement the /dishes handlers needed to make the tests pass
 module.exports = {
   list,
@@ -101,4 +119,5 @@ module.exports = {
     bodyHasImageUrlProperty,
     create,
   ],
+  read: [dishExists, read],
 };
