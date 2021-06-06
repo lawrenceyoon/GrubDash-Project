@@ -143,6 +143,14 @@ function update(req, res, next) {
   res.json({ data: dish });
 }
 
+function destroy(req, res, next) {
+  const { dishId } = req.params;
+  const index = dishes.findIndex((dish) => dish.id === dishId);
+
+  dishes.splice(index, 1);
+  res.sendStatus(204);
+}
+
 // TODO: Implement the /dishes handlers needed to make the tests pass
 module.exports = {
   list,
@@ -165,4 +173,5 @@ module.exports = {
     bodyHasImageUrlProperty,
     update,
   ],
+  delete: [dishExists, destroy],
 };
