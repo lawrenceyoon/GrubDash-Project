@@ -1,9 +1,16 @@
-const path = require("path");
+// dependencies
+const path = require('path');
+// local files
+const orders = require(path.resolve('src/data/orders-data'));
+const nextId = require('../utils/nextId');
 
-// Use the existing order data
-const orders = require(path.resolve("src/data/orders-data"));
+// VALIDATION
 
-// Use this function to assigh ID's when necessary
-const nextId = require("../utils/nextId");
+// MIDDLEWARE
+function list(req, res, next) {
+  res.json({ data: orders });
+}
 
-// TODO: Implement the /orders handlers needed to make the tests pass
+module.exports = {
+  list,
+};

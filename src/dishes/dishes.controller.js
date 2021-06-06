@@ -151,7 +151,6 @@ function destroy(req, res, next) {
   res.sendStatus(204);
 }
 
-// TODO: Implement the /dishes handlers needed to make the tests pass
 module.exports = {
   list,
   create: [
