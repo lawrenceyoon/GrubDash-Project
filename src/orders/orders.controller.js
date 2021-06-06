@@ -15,7 +15,7 @@ function orderExists(req, res, next) {
   }
   next({
     status: 404,
-    message: `Order dose not exist: ${orderId}`,
+    message: `Order does not exist: ${orderId}`,
   });
 }
 
@@ -59,7 +59,51 @@ function bodyHasMobileNumberProperty(req, res, next) {
   });
 }
 
-function bodyHasStatusProperty(req, res, next) {}
+function bodyHasStatusProperty(req, res, next) {
+  const { data: { status } = {} } = req.body;
+  const statusMessages = [
+    'pending',
+    'preparing',
+    'out-for-delivery',
+    'delivered',
+  ];
+
+  if (status) {
+    for (let i = 0; i < statusMessages.length; i++) {
+      if (status === statusMessages[i]) {
+        if (res.locals.order.status !== 'delivered') {
+          return next();
+        }
+        next({
+          status: 400,
+          message: `A delivered order cannot be changed.`,
+        });
+      }
+      next({
+        status: 400,
+        message: `Order must have a status of ${statusMessages}.`,
+      });
+    }
+
+    return next();
+  }
+  next({
+    status: 400,
+    message: `Order must have a status of ${statusMessages}.`,
+  });
+}
+
+// try to break up bodyHasStatusProperty to another statusCheck
+// function statusCheck(req, res, next) {
+//   if (res.locals.order.status !== 'delivered') {
+//     return next();
+//   } else {
+//     next({
+//       status: 400,
+//       message: `A delivered order cannot be changed.`,
+//     })
+//   }
+// }
 
 function bodyHasDishesProperty(req, res, next) {
   const { data: { dishes } = {} } = req.body;
@@ -122,6 +166,12 @@ function read(req, res, next) {
   res.json({ data: res.locals.order });
 }
 
+//if (res.locals.foundOrder.status === 'delivered') {
+//   next({
+//     status: 400,
+//     message: `A delivered order cannot be changed`,
+//   });
+// }
 function update(req, res, next) {
   const order = res.locals.order;
   const { data: { deliverTo, mobileNumber, status, dishes } = {} } = req.body;
@@ -157,6 +207,7 @@ module.exports = {
     idBodyMatchesIdRoute,
     bodyHasDeliverToProperty,
     bodyHasMobileNumberProperty,
+    bodyHasStatusProperty,
     bodyHasDishesProperty,
     dishesQuantityPropertyCheck,
     update,
