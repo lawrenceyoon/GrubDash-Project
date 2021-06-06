@@ -19,6 +19,22 @@ function orderExists(req, res, next) {
   });
 }
 
+function idBodyMatchesIdRoute(req, res, next) {
+  const { orderId } = req.params;
+  const { data: { id } = {} } = req.body;
+
+  if (id) {
+    if (orderId === id) {
+      return next();
+    }
+    next({
+      status: 400,
+      message: `Order id does not match route id. Order: ${id}, Route: ${orderId}`,
+    });
+  }
+  next();
+}
+
 function bodyHasDeliverToProperty(req, res, next) {
   const { data: { deliverTo } = {} } = req.body;
 
@@ -43,6 +59,8 @@ function bodyHasMobileNumberProperty(req, res, next) {
   });
 }
 
+function bodyHasStatusProperty(req, res, next) {}
+
 function bodyHasDishesProperty(req, res, next) {
   const { data: { dishes } = {} } = req.body;
 
@@ -61,7 +79,7 @@ function bodyHasDishesProperty(req, res, next) {
   });
 }
 
-function qualityCheck(req, res, next) {
+function dishesQuantityPropertyCheck(req, res, next) {
   const { data: { dishes } = {} } = req.body;
 
   for (let i = 0; i < dishes.length; i++) {
@@ -104,14 +122,43 @@ function read(req, res, next) {
   res.json({ data: res.locals.order });
 }
 
+function update(req, res, next) {
+  const order = res.locals.order;
+  const { data: { deliverTo, mobileNumber, status, dishes } = {} } = req.body;
+
+  if (order.deliverTo !== deliverTo) {
+    order.deliverTo = deliverTo;
+  }
+  if (order.mobileNumber !== mobileNumber) {
+    order.mobileNumber = mobileNumber;
+  }
+  if (order.status !== status) {
+    order.status = status;
+  }
+  if (order.dishes !== dishes) {
+    order.dishes = dishes;
+  }
+
+  res.json({ data: order });
+}
+
 module.exports = {
   list,
   create: [
     bodyHasDeliverToProperty,
     bodyHasMobileNumberProperty,
     bodyHasDishesProperty,
-    qualityCheck,
+    dishesQuantityPropertyCheck,
     create,
   ],
   read: [orderExists, read],
+  update: [
+    orderExists,
+    idBodyMatchesIdRoute,
+    bodyHasDeliverToProperty,
+    bodyHasMobileNumberProperty,
+    bodyHasDishesProperty,
+    dishesQuantityPropertyCheck,
+    update,
+  ],
 };
