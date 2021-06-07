@@ -5,12 +5,14 @@ const orders = require(path.resolve('src/data/orders-data'));
 const nextId = require('../utils/nextId');
 
 // VALIDATION
+// check if order DOES exist, if not return error
 function orderExists(req, res, next) {
   const { orderId } = req.params;
   const foundOrder = orders.find((order) => orderId === order.id);
+  res.locals.orderId = orderId;
+  res.locals.order = foundOrder;
 
   if (foundOrder) {
-    res.locals.order = foundOrder;
     return next();
   }
   next({
@@ -19,12 +21,14 @@ function orderExists(req, res, next) {
   });
 }
 
+// check if id in params MATCHES id in req.body
 function idBodyMatchesIdRoute(req, res, next) {
   const { orderId } = req.params;
   const { data: { id } = {} } = req.body;
 
   if (id) {
     if (orderId === id) {
+      res.locals.id = id;
       return next();
     }
     next({
@@ -36,10 +40,12 @@ function idBodyMatchesIdRoute(req, res, next) {
   }
 }
 
+// check if req.body has a deliverTo prop
 function bodyHasDeliverToProperty(req, res, next) {
   const { data: { deliverTo } = {} } = req.body;
 
   if (deliverTo) {
+    res.locals.deliverTo = deliverTo;
     return next();
   }
   next({
@@ -48,10 +54,12 @@ function bodyHasDeliverToProperty(req, res, next) {
   });
 }
 
+// check if req.body has a mobileNumber prop
 function bodyHasMobileNumberProperty(req, res, next) {
   const { data: { mobileNumber } = {} } = req.body;
 
   if (mobileNumber) {
+    res.locals.mobileNumber = mobileNumber;
     return next();
   }
   next({
@@ -60,6 +68,7 @@ function bodyHasMobileNumberProperty(req, res, next) {
   });
 }
 
+// check if req.body has a status prop
 function bodyHasStatusProperty(req, res, next) {
   const { data: { status } = {} } = req.body;
   const statusMessages = [
@@ -70,6 +79,7 @@ function bodyHasStatusProperty(req, res, next) {
   ];
 
   if (status) {
+    res.locals.status = status;
     return next();
   }
   next({
@@ -78,6 +88,7 @@ function bodyHasStatusProperty(req, res, next) {
   });
 }
 
+// check if status has one of the following messages, the previous does NOT have a state of delivered,
 function statusCheckForUpdate(req, res, next) {
   const { data: { status } = {} } = req.body;
 
@@ -106,6 +117,7 @@ function statusCheckForUpdate(req, res, next) {
   }
 }
 
+// checks if req.body.status is pending
 function deleteOnlyOnPendingStatus(req, res, next) {
   if (res.locals.order.status !== 'pending') {
     next({
@@ -116,10 +128,12 @@ function deleteOnlyOnPendingStatus(req, res, next) {
   next();
 }
 
+// checks if req.body has dishes prop
 function bodyHasDishesProperty(req, res, next) {
   const { data: { dishes } = {} } = req.body;
 
   if (dishes) {
+    res.locals.dishes = dishes;
     if (Array.isArray(dishes) && dishes.length > 0) {
       return next();
     }
@@ -134,6 +148,7 @@ function bodyHasDishesProperty(req, res, next) {
   });
 }
 
+// checks if dishes is an integer greater than 0 and has a quantity prop
 function dishesQuantityPropertyCheck(req, res, next) {
   const { data: { dishes } = {} } = req.body;
 
@@ -152,21 +167,18 @@ function dishesQuantityPropertyCheck(req, res, next) {
   next();
 }
 
-// MIDDLEWARE
+// HANDLER FUNCTIONS
 function list(req, res, next) {
   res.json({ data: orders });
 }
 
 function create(req, res, next) {
-  const {
-    data: { deliverTo, mobileNumber, status, dishes },
-  } = req.body;
   const newOrder = {
     id: nextId(),
-    deliverTo,
-    mobileNumber,
-    status,
-    dishes,
+    deliverTo: res.locals.deliverTo,
+    mobileNumber: res.locals.mobileNumber,
+    status: res.locals.status,
+    dishes: res.locals.dishes,
   };
 
   orders.push(newOrder);
@@ -178,28 +190,25 @@ function read(req, res, next) {
 }
 
 function update(req, res, next) {
-  const order = res.locals.order;
-  const { data: { deliverTo, mobileNumber, status, dishes } = {} } = req.body;
+  const foundOrder = res.locals.order;
 
-  if (order.deliverTo !== deliverTo) {
-    order.deliverTo = deliverTo;
+  if (foundOrder.deliverTo !== res.locals.deliverTo) {
+    foundOrder.deliverTo = res.locals.deliverTo;
   }
-  if (order.mobileNumber !== mobileNumber) {
-    order.mobileNumber = mobileNumber;
+  if (foundOrder.mobileNumber !== res.locals.mobileNumber) {
+    foundOrder.mobileNumber = res.locals.mobileNumber;
   }
-  if (order.status !== status) {
-    order.status = status;
+  if (foundOrder.status !== res.locals.status) {
+    foundOrder.status = res.locals.status;
   }
-  if (order.dishes !== dishes) {
-    order.dishes = dishes;
+  if (foundOrder.dishes !== res.locals.dishes) {
+    foundOrder.dishes = res.locals.dishes;
   }
-
-  res.json({ data: order });
+  res.json({ data: foundOrder });
 }
 
 function destroy(req, res, next) {
-  const { orderId } = req.params;
-  const index = orders.findIndex((order) => order.id === orderId);
+  const index = orders.findIndex((order) => order.id === res.locals.orderId);
 
   orders.splice(index, 1);
   res.sendStatus(204);

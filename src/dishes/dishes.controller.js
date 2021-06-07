@@ -10,6 +10,7 @@ function dishExists(req, res, next) {
   const foundDish = dishes.find((dish) => dishId === dish.id);
 
   if (foundDish) {
+    res.locals.dishId = dishId;
     res.locals.dish = foundDish;
     return next();
   }
@@ -19,12 +20,14 @@ function dishExists(req, res, next) {
   });
 }
 
+// check if id in params MATCHES id in req.body
 function idBodyMatchesIdRoute(req, res, next) {
   const { dishId } = req.params;
   const { data: { id } = {} } = req.body;
 
   if (id) {
     if (dishId === id) {
+      res.locals.id = id;
       return next();
     }
     next({
@@ -35,10 +38,12 @@ function idBodyMatchesIdRoute(req, res, next) {
   next();
 }
 
+// checks if price prop is an integer greater than 0
 function priceIntegerGreaterThanZero(req, res, next) {
-  const price = req.body.data.price;
+  const { data: { price } = {} } = req.body;
 
   if (Number.isInteger(price) && price > 0) {
+    res.locals.price = price;
     return next();
   }
   next({
@@ -47,10 +52,12 @@ function priceIntegerGreaterThanZero(req, res, next) {
   });
 }
 
+// check if req.body has a name prop
 function bodyHasNameProperty(req, res, next) {
   const { data: { name } = {} } = req.body;
 
   if (name) {
+    res.locals.name = name;
     return next();
   }
   next({
@@ -59,10 +66,12 @@ function bodyHasNameProperty(req, res, next) {
   });
 }
 
-function bodyHasDescriptionProperty(req, rex, next) {
+// check if req.body has a description prop
+function bodyHasDescriptionProperty(req, res, next) {
   const { data: { description } = {} } = req.body;
 
   if (description) {
+    res.locals.description = description;
     return next();
   }
   next({
@@ -71,10 +80,12 @@ function bodyHasDescriptionProperty(req, rex, next) {
   });
 }
 
+// check if req.body has a price prop and it isn't 0
 function bodyHasPriceProperty(req, res, next) {
   const { data: { price } = {} } = req.body;
 
   if (price) {
+    res.locals.price = price;
     return next();
   }
   if (price === 0) {
@@ -89,10 +100,12 @@ function bodyHasPriceProperty(req, res, next) {
   });
 }
 
+// check if req.body has an image_url prop
 function bodyHasImageUrlProperty(req, res, next) {
   const { data: { image_url } = {} } = req.body;
 
   if (image_url) {
+    res.locals.image_url = image_url;
     return next();
   }
   next({
@@ -101,19 +114,18 @@ function bodyHasImageUrlProperty(req, res, next) {
   });
 }
 
-// MIDDLEWARE
+// HANDLER FUNCTIONS
 function list(req, res, next) {
   res.json({ data: dishes });
 }
 
 function create(req, res, next) {
-  const { data: { name, description, price, image_url } = {} } = req.body;
   const newDish = {
     id: nextId(),
-    name,
-    description,
-    price,
-    image_url,
+    name: res.locals.name,
+    description: res.locals.description,
+    price: res.locals.price,
+    image_url: res.locals.image_url,
   };
 
   dishes.push(newDish);
@@ -125,22 +137,22 @@ function read(req, res, next) {
 }
 
 function update(req, res, next) {
-  const dish = res.locals.dish;
+  const foundDish = res.locals.dish;
   const { data: { name, description, price, image_url } = {} } = req.body;
 
-  if (dish.name !== name) {
-    dish.name = name;
+  if (foundDish.name !== res.locals.name) {
+    foundDish.name = res.locals.name;
   }
-  if (dish.description !== description) {
-    dish.description = description;
+  if (foundDish.description !== res.locals.description) {
+    foundDish.description = res.locals.description;
   }
-  if (dish.price !== price) {
-    dish.price = price;
+  if (foundDish.price !== res.locals.price) {
+    foundDish.price = res.locals.price;
   }
-  if (dish.image_url !== image_url) {
-    dish.image_url = image_url;
+  if (foundDish.image_url !== res.locals.image_url) {
+    foundDish.image_url = res.locals.image_url;
   }
-  res.json({ data: dish });
+  res.json({ data: foundDish });
 }
 
 module.exports = {
