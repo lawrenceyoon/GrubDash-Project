@@ -31,8 +31,9 @@ function idBodyMatchesIdRoute(req, res, next) {
       status: 400,
       message: `Order id does not match route id. Order: ${id}, Route: ${orderId}`,
     });
+  } else {
+    next();
   }
-  next();
 }
 
 function bodyHasDeliverToProperty(req, res, next) {
@@ -77,8 +78,7 @@ function bodyHasStatusProperty(req, res, next) {
   });
 }
 
-// try to break up bodyHasStatusProperty to another statusCheck
-function statusCheck(req, res, next) {
+function statusCheckForUpdate(req, res, next) {
   const { data: { status } = {} } = req.body;
   if (res.locals.order.status !== 'delivered') {
     const statusMessages = [
@@ -103,6 +103,16 @@ function statusCheck(req, res, next) {
       message: `A delivered order cannot be changed.`,
     });
   }
+}
+
+function deleteOnlyOnPendingStatus(req, res, next) {
+  if (res.locals.order.status !== 'pending') {
+    next({
+      status: 400,
+      message: `An order cannot be deleted unless it is pending.`,
+    });
+  }
+  next();
 }
 
 function bodyHasDishesProperty(req, res, next) {
@@ -166,12 +176,6 @@ function read(req, res, next) {
   res.json({ data: res.locals.order });
 }
 
-//if (res.locals.foundOrder.status === 'delivered') {
-//   next({
-//     status: 400,
-//     message: `A delivered order cannot be changed`,
-//   });
-// }
 function update(req, res, next) {
   const order = res.locals.order;
   const { data: { deliverTo, mobileNumber, status, dishes } = {} } = req.body;
@@ -192,6 +196,14 @@ function update(req, res, next) {
   res.json({ data: order });
 }
 
+function destroy(req, res, next) {
+  const { orderId } = req.params;
+  const index = orders.findIndex((order) => order.id === orderId);
+
+  orders.splice(index, 1);
+  res.sendStatus(204);
+}
+
 module.exports = {
   list,
   create: [
@@ -208,9 +220,10 @@ module.exports = {
     bodyHasDeliverToProperty,
     bodyHasMobileNumberProperty,
     bodyHasStatusProperty,
-    statusCheck,
+    statusCheckForUpdate,
     bodyHasDishesProperty,
     dishesQuantityPropertyCheck,
     update,
   ],
+  delete: [orderExists, deleteOnlyOnPendingStatus, destroy],
 };
