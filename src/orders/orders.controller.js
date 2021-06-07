@@ -69,22 +69,6 @@ function bodyHasStatusProperty(req, res, next) {
   ];
 
   if (status) {
-    for (let i = 0; i < statusMessages.length; i++) {
-      if (status === statusMessages[i]) {
-        if (res.locals.order.status !== 'delivered') {
-          return next();
-        }
-        next({
-          status: 400,
-          message: `A delivered order cannot be changed.`,
-        });
-      }
-      next({
-        status: 400,
-        message: `Order must have a status of ${statusMessages}.`,
-      });
-    }
-
     return next();
   }
   next({
@@ -94,16 +78,32 @@ function bodyHasStatusProperty(req, res, next) {
 }
 
 // try to break up bodyHasStatusProperty to another statusCheck
-// function statusCheck(req, res, next) {
-//   if (res.locals.order.status !== 'delivered') {
-//     return next();
-//   } else {
-//     next({
-//       status: 400,
-//       message: `A delivered order cannot be changed.`,
-//     })
-//   }
-// }
+function statusCheck(req, res, next) {
+  const { data: { status } = {} } = req.body;
+  if (res.locals.order.status !== 'delivered') {
+    const statusMessages = [
+      'pending',
+      'preparing',
+      'out-for-delivery',
+      'delivered',
+    ];
+
+    for (let i = 0; i < statusMessages.length; i++) {
+      if (status === statusMessages[i]) {
+        next();
+      }
+    }
+    next({
+      status: 400,
+      message: `Order must have a status of ${statusMessages}.`,
+    });
+  } else {
+    next({
+      status: 400,
+      message: `A delivered order cannot be changed.`,
+    });
+  }
+}
 
 function bodyHasDishesProperty(req, res, next) {
   const { data: { dishes } = {} } = req.body;
@@ -208,6 +208,7 @@ module.exports = {
     bodyHasDeliverToProperty,
     bodyHasMobileNumberProperty,
     bodyHasStatusProperty,
+    statusCheck,
     bodyHasDishesProperty,
     dishesQuantityPropertyCheck,
     update,
