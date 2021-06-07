@@ -80,6 +80,7 @@ function bodyHasStatusProperty(req, res, next) {
 
 function statusCheckForUpdate(req, res, next) {
   const { data: { status } = {} } = req.body;
+
   if (res.locals.order.status !== 'delivered') {
     const statusMessages = [
       'pending',
