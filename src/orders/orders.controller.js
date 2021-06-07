@@ -168,11 +168,11 @@ function dishesQuantityPropertyCheck(req, res, next) {
 }
 
 // HANDLER FUNCTIONS
-function list(req, res, next) {
+function list(req, res) {
   res.json({ data: orders });
 }
 
-function create(req, res, next) {
+function create(req, res) {
   const newOrder = {
     id: nextId(),
     deliverTo: res.locals.deliverTo,
@@ -185,11 +185,11 @@ function create(req, res, next) {
   res.status(201).json({ data: newOrder });
 }
 
-function read(req, res, next) {
+function read(req, res) {
   res.json({ data: res.locals.order });
 }
 
-function update(req, res, next) {
+function update(req, res) {
   const foundOrder = res.locals.order;
 
   if (foundOrder.deliverTo !== res.locals.deliverTo) {
@@ -207,7 +207,7 @@ function update(req, res, next) {
   res.json({ data: foundOrder });
 }
 
-function destroy(req, res, next) {
+function destroy(req, res) {
   const index = orders.findIndex((order) => order.id === res.locals.orderId);
 
   orders.splice(index, 1);

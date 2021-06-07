@@ -115,11 +115,11 @@ function bodyHasImageUrlProperty(req, res, next) {
 }
 
 // HANDLER FUNCTIONS
-function list(req, res, next) {
+function list(req, res) {
   res.json({ data: dishes });
 }
 
-function create(req, res, next) {
+function create(req, res) {
   const newDish = {
     id: nextId(),
     name: res.locals.name,
@@ -132,13 +132,12 @@ function create(req, res, next) {
   res.status(201).json({ data: newDish });
 }
 
-function read(req, res, next) {
+function read(req, res) {
   res.json({ data: res.locals.dish });
 }
 
-function update(req, res, next) {
+function update(req, res) {
   const foundDish = res.locals.dish;
-  const { data: { name, description, price, image_url } = {} } = req.body;
 
   if (foundDish.name !== res.locals.name) {
     foundDish.name = res.locals.name;
