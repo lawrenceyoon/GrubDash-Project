@@ -143,14 +143,6 @@ function update(req, res, next) {
   res.json({ data: dish });
 }
 
-function destroy(req, res, next) {
-  const { dishId } = req.params;
-  const index = dishes.findIndex((dish) => dish.id === dishId);
-
-  dishes.splice(index, 1);
-  res.sendStatus(204);
-}
-
 module.exports = {
   list,
   create: [
@@ -172,5 +164,4 @@ module.exports = {
     bodyHasImageUrlProperty,
     update,
   ],
-  delete: [dishExists, destroy],
 };
